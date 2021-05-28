@@ -1,5 +1,8 @@
-FROM ubuntu:18.04 as dev_stage
+FROM ubuntu:20.10 as dev_stage
 LABEL org.opencontainers.image.source https://bitbucket.org/uprev/nrf5-docker.git
+
+ENV DEBIAN_FRONTEND noninteractive
+
 
 # Download tools and prerequisites
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
@@ -9,8 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bzip2 \
     cmake \
     build-essential \
+    gcc-arm-none-eabi \
+    libnewlib-arm-none-eabi \
     gcc-multilib \
-    srecord \
     pkg-config \
     python3 \
     python3-pip \
@@ -18,10 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libusb-1.0.0 && \
     apt-get clean all && rm -rf /var/lib/apt/lists/*
 
-# # Download and install ARM toolchain matching the SDK
-RUN curl -SL https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2 > /tmp/gcc-arm-none-eabi-9-2019-q4-major-linux.tar.bz2 && \
-tar xvjf /tmp/gcc-arm-none-eabi-9-2019-q4-major-linux.tar.bz2 -C /usr/share && \
-rm /tmp/gcc-arm-none-eabi-9-2019-q4-major-linux.tar.bz2
 
 # Download NRF5 SDK v17.0.2 and extract nRF5 SDK to /nrf5/nRF5_SDK_17.0.2
 RUN curl -SL https://developer.nordicsemi.com/nRF5_SDK/nRF5_SDK_v17.x.x/nRF5_SDK_17.0.2_d674dde.zip > /tmp/SDK_17.0.2.zip && \
@@ -33,7 +33,7 @@ rm /tmp/SDK_17.0.2.zip
 # Patch around what is likely to be an oversight in Nordic's SDK
 # https://devzone.nordicsemi.com/f/nordic-q-a/68352/gcc-toolchain-version-for-sdk-17-0-2-on-posix
 RUN \
-echo "GNU_INSTALL_ROOT ?= /usr/share/gcc-arm-none-eabi-9-2019-q4-major/bin/" > /nrf/nRF5_SDK_17.0.2/components/toolchain/gcc/Makefile.posix && \
+echo "GNU_INSTALL_ROOT ?= /usr/bin/" > /nrf/nRF5_SDK_17.0.2/components/toolchain/gcc/Makefile.posix && \
 echo "GNU_VERSION ?= 9.2.1" >> /nrf/nRF5_SDK_17.0.2/components/toolchain/gcc/Makefile.posix && \
 echo "GNU_PREFIX ?= arm-none-eabi" >> /nrf/nRF5_SDK_17.0.2/components/toolchain/gcc/Makefile.posix
 
@@ -44,7 +44,7 @@ RUN pip3 install -U pip
 RUN pip3 install nrfutil mrtutils 
 
 ENV NRF_SDK_PATH /nrf/nRF5_SDK_17.0.2 
-ENV PATH="/usr/share/gcc-arm-none-eabi-9-2019-q4-major/bin:${PATH}"
+
 
 ARG DEV_PW=password
 ARG ROOT_PW=password
