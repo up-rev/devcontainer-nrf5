@@ -57,6 +57,9 @@ RUN adduser --quiet dev && \
 
 RUN echo "root:$ROOT_PW" | chpasswd
 
+# set gdbinit auto-load 
+RUN echo "set auto-load safe-path /" >> /home/dev/.gdbinit
+
 
 ######################################################################################################
 #                           Stage: jenkins                                                           #
